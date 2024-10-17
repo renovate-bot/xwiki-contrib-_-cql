@@ -196,6 +196,32 @@ class CQLTest
     }
 
     @Test
+    void testIdCurrentContent() throws Exception
+    {
+        String expected = "fullname:MySpaceTests.MyPage.SubPage.WebHome";
+        assertEquals(expected, t("id = currentContent()"));
+        assertEquals(expected, t("content = currentContent()"));
+    }
+
+    @Test
+    void testParentCurrentContent() throws Exception
+    {
+        assertEquals(
+            "space_exact:MySpaceTests.MyPage.SubPage",
+            t("parent = currentContent()")
+        );
+    }
+
+    @Test
+    void testAncestorCurrentContent() throws Exception
+    {
+        assertEquals(
+            "space_facet:2\\/MySpaceTests.MyPage.SubPage.",
+            t("ancestor = currentContent()")
+        );
+    }
+
+    @Test
     void testSpaceTooManyArguments()
     {
         expectParserException(

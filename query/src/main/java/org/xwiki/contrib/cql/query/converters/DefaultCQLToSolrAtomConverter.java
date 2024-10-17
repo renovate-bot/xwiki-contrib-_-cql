@@ -276,6 +276,7 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
 
                 case "recentlyViewedContent":
                 case "recentlyViewedSpaces":
+                case "currentContent":
                 case "favouriteSpaces":
                     throw new ConversionException(String.format("Unsupported function [%s]", functionName),
                         expression.getParserState());

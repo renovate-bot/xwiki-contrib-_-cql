@@ -20,8 +20,10 @@
 package org.xwiki.contrib.cql.query.converters.internal;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import org.xwiki.component.annotation.Component;
+import org.xwiki.contrib.cql.aqlparser.ast.AQLFunctionCall;
 import org.xwiki.contrib.cql.aqlparser.ast.AbstractAQLAtomicValue;
 import org.xwiki.contrib.cql.aqlparser.ast.AQLAtomicClause;
 import org.xwiki.contrib.cql.query.converters.ConfluenceIdResolver;
@@ -29,6 +31,8 @@ import org.xwiki.contrib.cql.query.converters.ConversionException;
 import org.xwiki.contrib.cql.query.converters.DefaultCQLToSolrAtomConverter;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.stability.Unstable;
+
+import com.xpn.xwiki.XWikiContext;
 
 import static org.xwiki.contrib.cql.query.converters.Utils.escapeSolr;
 
@@ -44,19 +48,18 @@ public abstract class AbstractIdCQLToSolrAtomConverter extends DefaultCQLToSolrA
     @Inject
     private ConfluenceIdResolver idResolver;
 
+    @Inject
+    private Provider<XWikiContext> contextProvider;
+
     @Override
     protected String convertToSolr(AQLAtomicClause atom, AbstractAQLAtomicValue right) throws ConversionException
     {
-        String value = super.convertToSolr(atom, right);
+        EntityReference docRef = tryCurrentContentFunction(right);
 
-        long id;
-        try {
-            id = Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            throw new ConversionException("Expected a Confluence content id (a number)", right.getParserState());
+        if (docRef == null) {
+            docRef = getIdFromValue(atom, right);
         }
 
-        EntityReference docRef = idResolver.getDocumentById(atom.getRight(), id);
         if (docRef == null) {
             return null;
         }
@@ -67,6 +70,38 @@ public abstract class AbstractIdCQLToSolrAtomConverter extends DefaultCQLToSolrA
         }
 
         return escapeSolr(v);
+    }
+
+    private EntityReference getIdFromValue(AQLAtomicClause atom, AbstractAQLAtomicValue right)
+        throws ConversionException
+    {
+        EntityReference docRef;
+        String value = super.convertToSolr(atom, right);
+
+        long id;
+        try {
+            id = Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            throw new ConversionException("Expected a Confluence content id (a number)", right.getParserState());
+        }
+
+        docRef = idResolver.getDocumentById(atom.getRight(), id);
+        return docRef;
+    }
+
+    private EntityReference tryCurrentContentFunction(AbstractAQLAtomicValue right) throws ConversionException
+    {
+        if (right instanceof AQLFunctionCall) {
+            AQLFunctionCall fn = (AQLFunctionCall) right;
+            if ("currentcontent".equalsIgnoreCase(fn.getFunctionName())) {
+                if (!fn.getArguments().isEmpty()) {
+                    throw new ConversionException("Function [currentUser] does not take any argument",
+                        right.getParserState());
+                }
+                return contextProvider.get().getDoc().getDocumentReference();
+            }
+        }
+        return null;
     }
 
     protected abstract String getValue(EntityReference docRef);
