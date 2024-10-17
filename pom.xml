@@ -29,7 +29,7 @@
   </parent>
   <groupId>org.xwiki.contrib.cql</groupId>
   <artifactId>cql</artifactId>
-  <version>0.0.3-SNAPSHOT</version>
+  <version>0.0.3</version>
   <name>Confluence Query Language (CQL) - Parent POM</name>
   <description>Parent POM for CQL modules</description>
   <packaging>pom</packaging>
@@ -43,7 +43,7 @@
     <connection>scm:git:git://github.com/xwiki-contrib/cql.git</connection>
     <developerConnection>scm:git:git@github.com:xwiki-contrib/cql.git</developerConnection>
     <url>https://github.com/xwiki-contrib/cql/tree/master</url>
-    <tag>HEAD</tag>
+    <tag>cql-0.0.3</tag>
   </scm>
   <developers>
     <developer>
