@@ -23,14 +23,16 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 import org.xwiki.component.annotation.Component;
+import org.xwiki.contrib.confluence.resolvers.ConfluencePageIdResolver;
+import org.xwiki.contrib.confluence.resolvers.ConfluenceResolverException;
 import org.xwiki.contrib.cql.aqlparser.ast.AQLFunctionCall;
 import org.xwiki.contrib.cql.aqlparser.ast.AbstractAQLAtomicValue;
 import org.xwiki.contrib.cql.aqlparser.ast.AQLAtomicClause;
-import org.xwiki.contrib.cql.query.converters.ConfluenceIdResolver;
 import org.xwiki.contrib.cql.query.converters.ConversionException;
 import org.xwiki.contrib.cql.query.converters.DefaultCQLToSolrAtomConverter;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.stability.Unstable;
+
 
 import com.xpn.xwiki.XWikiContext;
 
@@ -46,7 +48,7 @@ import static org.xwiki.contrib.cql.query.converters.Utils.escapeSolr;
 public abstract class AbstractIdCQLToSolrAtomConverter extends DefaultCQLToSolrAtomConverter
 {
     @Inject
-    private ConfluenceIdResolver idResolver;
+    private ConfluencePageIdResolver idResolver;
 
     @Inject
     private Provider<XWikiContext> contextProvider;
@@ -75,7 +77,6 @@ public abstract class AbstractIdCQLToSolrAtomConverter extends DefaultCQLToSolrA
     private EntityReference getIdFromValue(AQLAtomicClause atom, AbstractAQLAtomicValue right)
         throws ConversionException
     {
-        EntityReference docRef;
         String value = super.convertToSolr(atom, right);
 
         long id;
@@ -85,8 +86,16 @@ public abstract class AbstractIdCQLToSolrAtomConverter extends DefaultCQLToSolrA
             throw new ConversionException("Expected a Confluence content id (a number)", right.getParserState());
         }
 
-        docRef = idResolver.getDocumentById(atom.getRight(), id);
-        return docRef;
+        String err = String.format("Could not find the document matching Confluence id [%d]", id);
+        try {
+            EntityReference docRef = idResolver.getDocumentById(id);
+            if (docRef != null) {
+                return docRef;
+            }
+        } catch (ConfluenceResolverException e) {
+            throw new ConversionException(err, e, atom.getRight() == null ? null : atom.getRight().getParserState());
+        }
+        throw new ConversionException(err, atom.getRight().getParserState());
     }
 
     private EntityReference tryCurrentContentFunction(AbstractAQLAtomicValue right) throws ConversionException

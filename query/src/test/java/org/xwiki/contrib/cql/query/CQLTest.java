@@ -22,26 +22,25 @@ package org.xwiki.contrib.cql.query;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.xwiki.contrib.confluence.resolvers.ConfluencePageIdResolver;
+import org.xwiki.contrib.confluence.resolvers.ConfluenceResolverException;
+import org.xwiki.contrib.confluence.resolvers.ConfluenceSpaceKeyResolver;
+import org.xwiki.contrib.confluence.resolvers.ConfluenceSpaceResolver;
 import org.xwiki.contrib.cql.aqlparser.AQLParser;
 import org.xwiki.contrib.cql.query.converters.CQLToSolrQueryConverter;
 import org.xwiki.contrib.cql.aqlparser.exceptions.ParserException;
 import org.xwiki.contrib.cql.query.converters.DefaultCQLToSolrAtomConverter;
 import org.xwiki.contrib.cql.query.converters.internal.AncestorCQLToSolrAtomConverter;
-import org.xwiki.contrib.cql.query.converters.internal.ConfluencePageClassConfluenceIdResolver;
 import org.xwiki.contrib.cql.query.converters.internal.ContentCQLToSolrAtomConverter;
-import org.xwiki.contrib.cql.query.converters.internal.DefaultConfluenceIdResolver;
-import org.xwiki.contrib.cql.query.converters.internal.DefaultConfluenceSpaceResolver;
 import org.xwiki.contrib.cql.query.converters.internal.ParentCQLToSolrAtomConverter;
 import org.xwiki.model.EntityType;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReference;
-import org.xwiki.query.Query;
-import org.xwiki.query.QueryException;
-import org.xwiki.query.QueryManager;
+import org.xwiki.model.reference.SpaceReference;
+import org.xwiki.model.reference.WikiReference;
 import org.xwiki.test.annotation.ComponentList;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;
 import org.xwiki.test.junit5.mockito.MockComponent;
@@ -55,12 +54,8 @@ import com.xpn.xwiki.test.reference.ReferenceComponentList;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.xwiki.query.Query.HQL;
 
 /**
  * Unit test for {@link CQLToSolrQueryConverter}.
@@ -69,9 +64,6 @@ import static org.xwiki.query.Query.HQL;
 @OldcoreTest
 @ReferenceComponentList
 @ComponentList({
-    DefaultConfluenceIdResolver.class,
-    DefaultConfluenceSpaceResolver.class,
-    ConfluencePageClassConfluenceIdResolver.class,
     AncestorCQLToSolrAtomConverter.class,
     ContentCQLToSolrAtomConverter.class,
     ParentCQLToSolrAtomConverter.class,
@@ -97,10 +89,19 @@ class CQLTest
             + "because we don't index the data as string fields in Solr required for supporting other operators "
             + "(line 1, col 1, pos 0)";
 
+    private static final String TESTWIKI = "testwiki";
+
+    private static final String MY_SPACE_TESTS = "MySpaceTests";
+
+    private static final EntityReference MY_SPACE_TESTS_REF = new EntityReference(
+        MY_SPACE_TESTS,
+        EntityType.SPACE,
+        new WikiReference(TESTWIKI)
+    );
 
     private static final DocumentReference SUBPAGE_REF = new DocumentReference(
-        "testwiki",
-        Arrays.asList("MySpaceTests", "MyPage", "SubPage"),
+        TESTWIKI,
+        Arrays.asList(MY_SPACE_TESTS, "MyPage", "SubPage"),
         WEB_HOME
     );
 
@@ -127,6 +128,7 @@ class CQLTest
             )
         )
     ));
+
     @InjectMockComponents
     private CQLToSolrQueryConverter queryConverter;
 
@@ -134,7 +136,13 @@ class CQLTest
     private MockitoOldcore mockitoOldcore;
 
     @MockComponent
-    private QueryManager queryManager;
+    private ConfluenceSpaceKeyResolver confluenceSpaceKeyResolver;
+
+    @MockComponent
+    private ConfluencePageIdResolver confluencePageIdResolver;
+
+    @MockComponent
+    private ConfluenceSpaceResolver confluenceSpaceResolver;
 
     private String t(String cql) throws ParserException, IOException
     {
@@ -143,38 +151,53 @@ class CQLTest
 
     private void expectParserException(String expectedMessage, String cql)
     {
-        ParserException thrown = assertThrows(
-            ParserException.class, () -> t(cql));
+        expectParserException(expectedMessage, cql, null);
+    }
+
+    private void expectParserException(String expectedMessage, String cql, String causeMessage)
+    {
+        ParserException thrown = assertThrows(ParserException.class, () -> t(cql));
         assertEquals(expectedMessage, thrown.getMessage());
+        if (causeMessage != null) {
+            assertEquals(causeMessage, thrown.getCause().getMessage());
+        }
     }
 
     @BeforeEach
-    void configure() throws QueryException
+    void configure() throws ConfluenceResolverException
     {
         mockitoOldcore.getXWikiContext().setUserReference(GUEST);
         mockitoOldcore.getXWikiContext().setDoc(new XWikiDocument(SUBPAGE_REF));
 
+        when(confluenceSpaceResolver.getSpace(any())).then(invocation -> {
+            EntityReference ref = invocation.getArgument(0);
+            if (ref.hasParent(MY_SPACE_TESTS_REF)) {
+                return MY_SPACE_TESTS_REF;
+            }
 
-        AtomicLong id = new AtomicLong();
-
-        Query mockQuery = mock(Query.class);
-        when(mockQuery.bindValue(any(), any())).then(invocation -> {
-            id.set(invocation.getArgument(1));
-            return mockQuery;
+            return null;
         });
-        when(mockQuery.setOffset(anyInt())).thenReturn(mockQuery);
-        when(mockQuery.setLimit(anyInt())).thenReturn(mockQuery);
-        when(mockQuery.setWiki(any())).thenReturn(mockQuery);
-        when(mockQuery.execute()).then(invocation -> {
-            switch ((int) id.get()) {
-                case 42: return Collections.singletonList(THE_ANSWER_DOC);
-                case 1337: return Collections.singletonList(THE_LEET_DOC);
-                case 111: throw new QueryException("The query failed", mockQuery, new Exception("Arbitrary cause"));
+
+        when(confluenceSpaceResolver.getSpaceKey(any())).then(invocation -> {
+            EntityReference ref = invocation.getArgument(0);
+            if (ref.hasParent(MY_SPACE_TESTS_REF)) {
+                return MY_SPACE_TESTS;
+            }
+            return null;
+        });
+
+        when(confluencePageIdResolver.getDocumentById(anyLong())).then(invocation -> {
+            switch (((Long) invocation.getArgument(0)).intValue()) {
+                case 42: return THE_ANSWER_DOC.getDocumentReference();
+                case 1337: return THE_LEET_DOC.getDocumentReference();
+                case 111: throw new ConfluenceResolverException("The query failed", new Exception("Arbitrary cause"));
                 default:
-                    return emptyList();
+                    return null;
             }
         });
-        when(queryManager.createQuery(any(), eq(HQL))).then(invocation -> mockQuery);
+
+        when(confluenceSpaceKeyResolver.getSpaceByKey(anyString()))
+            .then(invocation -> new SpaceReference(TESTWIKI, (String) invocation.getArgument(0)));
     }
 
     @Test
@@ -631,8 +654,9 @@ class CQLTest
     void testQueryExceptionWhileHandlingConfluenceID()
     {
         expectParserException(
-            "An unexpected error happened (line 1, col 10, pos 9)",
-            "parent = 111");
+            "Could not find the document matching Confluence id [111] (line 1, col 10, pos 9)",
+            "parent = 111",
+            "The query failed");
     }
 
     @Test

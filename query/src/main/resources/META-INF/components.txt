@@ -3,8 +3,5 @@ org.xwiki.contrib.cql.query.converters.DefaultCQLToSolrAtomConverter
 org.xwiki.contrib.cql.query.converters.DefaultCQLToSolrSortParameterConverter
 org.xwiki.contrib.cql.query.converters.CQLToSolrQueryConverter
 org.xwiki.contrib.cql.query.converters.internal.AncestorCQLToSolrAtomConverter
-org.xwiki.contrib.cql.query.converters.internal.DefaultConfluenceIdResolver
-org.xwiki.contrib.cql.query.converters.internal.DefaultConfluenceSpaceResolver
-org.xwiki.contrib.cql.query.converters.internal.ConfluencePageClassConfluenceIdResolver
 org.xwiki.contrib.cql.query.converters.internal.ContentCQLToSolrAtomConverter
 org.xwiki.contrib.cql.query.converters.internal.ParentCQLToSolrAtomConverter

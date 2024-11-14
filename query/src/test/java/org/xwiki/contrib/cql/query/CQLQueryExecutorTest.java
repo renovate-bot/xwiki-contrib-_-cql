@@ -29,14 +29,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.xwiki.component.internal.ContextComponentManagerProvider;
+import org.xwiki.contrib.confluence.resolvers.internal.DefaultConfluencePageResolver;
+import org.xwiki.contrib.confluence.resolvers.internal.DefaultConfluenceSpaceResolver;
+import org.xwiki.contrib.confluence.resolvers.internal.PageClassConfluenceResolver;
 import org.xwiki.contrib.cql.query.converters.CQLToSolrQueryConverter;
 import org.xwiki.contrib.cql.query.converters.DefaultCQLToSolrAtomConverter;
 import org.xwiki.contrib.cql.query.converters.DefaultCQLToSolrSortParameterConverter;
 import org.xwiki.contrib.cql.query.converters.internal.AncestorCQLToSolrAtomConverter;
-import org.xwiki.contrib.cql.query.converters.internal.ConfluencePageClassConfluenceIdResolver;
 import org.xwiki.contrib.cql.query.converters.internal.ContentCQLToSolrAtomConverter;
-import org.xwiki.contrib.cql.query.converters.internal.DefaultConfluenceIdResolver;
-import org.xwiki.contrib.cql.query.converters.internal.DefaultConfluenceSpaceResolver;
 import org.xwiki.contrib.cql.query.converters.internal.ParentCQLToSolrAtomConverter;
 import org.xwiki.contrib.cql.query.internal.CQLQueryExecutor;
 import org.xwiki.model.reference.DocumentReference;
@@ -73,9 +73,9 @@ import static org.mockito.Mockito.when;
     DefaultQueryManager.class,
     DefaultQueryExecutorManager.class,
     ContextComponentManagerProvider.class,
-    DefaultConfluenceIdResolver.class,
+    DefaultConfluencePageResolver.class,
     DefaultConfluenceSpaceResolver.class,
-    ConfluencePageClassConfluenceIdResolver.class,
+    PageClassConfluenceResolver.class,
     AncestorCQLToSolrAtomConverter.class,
     ContentCQLToSolrAtomConverter.class,
     ParentCQLToSolrAtomConverter.class,

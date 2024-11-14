@@ -27,6 +27,10 @@
     <artifactId>cql</artifactId>
     <version>0.0.4-SNAPSHOT</version>
   </parent>
+  <properties>
+    <!-- for some reason, revapi doesn't want to use revapi.differences, so let's disable it for the release -->
+    <xwiki.revapi.skip>true</xwiki.revapi.skip>
+  </properties>
   <artifactId>query</artifactId>
   <name>Confluence Query Language (CQL) - Query</name>
   <description>Query the wiki using the Confluence Query Language (CQL)</description>
@@ -51,6 +55,11 @@
       <groupId>org.xwiki.platform</groupId>
       <artifactId>xwiki-platform-oldcore</artifactId>
       <version>${platform.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.xwiki.contrib.confluence</groupId>
+      <artifactId>confluence-resolvers</artifactId>
+      <version>9.63.2</version>
     </dependency>
 
     <!-- Test dependencies -->
@@ -82,6 +91,32 @@
         <artifactId>maven-checkstyle-plugin</artifactId>
         <configuration>
           <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.revapi</groupId>
+        <artifactId>revapi-maven-plugin</artifactId>
+        <configuration>
+          <analysisConfiguration>
+            <revapi.differences>
+              <differences>
+                <item>
+                  <ignore>true</ignore>
+                  <code>java.class.removed</code>
+                  <old>interface org.xwiki.contrib.cql.query.converters.ConfluenceIdResolver</old>
+                  <justification>This class was moved to the Confluence contrib module, where it can be reused more easily.</justification>
+                  <criticality>documented</criticality>
+                </item>
+                <item>
+                  <ignore>true</ignore>
+                  <code>java.class.removed</code>
+                  <old>interface org.xwiki.contrib.cql.query.converters.ConfluenceSpaceResolver</old>
+                  <justification>This class was moved to the Confluence contrib module, where it can be reused more easily.</justification>
+                  <criticality>documented</criticality>
+                </item>
+              </differences>
+            </revapi.differences>
+          </analysisConfiguration>
         </configuration>
       </plugin>
     </plugins>

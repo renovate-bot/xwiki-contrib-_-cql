@@ -34,6 +34,9 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
+import org.xwiki.contrib.confluence.resolvers.ConfluenceSpaceKeyResolver;
+import org.xwiki.contrib.confluence.resolvers.ConfluenceSpaceResolver;
+import org.xwiki.contrib.confluence.resolvers.ConfluenceResolverException;
 import org.xwiki.contrib.cql.aqlparser.AQLOperator;
 import org.xwiki.contrib.cql.aqlparser.ast.AQLAtomicClause;
 import org.xwiki.contrib.cql.aqlparser.ast.AQLBooleanLiteral;
@@ -49,6 +52,7 @@ import org.xwiki.model.EntityType;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.stability.Unstable;
+
 
 import com.xpn.xwiki.XWikiContext;
 
@@ -118,6 +122,8 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
     );
 
     private static final Map<String, String> CQL_DATE_FN_TO_SOLR = new HashMap<>(9);
+    private static final String FAILED_TO_EVALUATE_CURRENT_SPACE = "Failed to evaluate [currentSpace()]";
+
     static {
         CQL_DATE_FN_TO_SOLR.put("now", "NOW");
         CQL_DATE_FN_TO_SOLR.put("startOfDay", "NOW/DAY");
@@ -153,6 +159,9 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
     @Inject
     @Named("local")
     private EntityReferenceSerializer<String> serializer;
+
+    @Inject
+    private ConfluenceSpaceKeyResolver confluenceSpaceKeyResolver;
 
     @Inject
     private ConfluenceSpaceResolver confluenceSpaceResolver;
@@ -221,7 +230,16 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
     {
         String v = expression.getString();
         if (atom.getField().equals(SPACE)) {
-            return getSpaceFacet(confluenceSpaceResolver.getSpaceByKey(expression, v));
+            String err = String.format("Failed to find space [%s]", v);
+            try {
+                EntityReference space = confluenceSpaceKeyResolver.getSpaceByKey(v);
+                if (space == null) {
+                    throw new ConversionException(err, expression.getParserState());
+                }
+                return getSpaceFacet(space);
+            } catch (ConfluenceResolverException e) {
+                throw new ConversionException(err, e, expression.getParserState());
+            }
         }
         return escapeSolr(v);
     }
@@ -233,6 +251,22 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
             facetNumber--;
         }
         return escapeSolr(facetNumber + "/" + serializer.serialize(space) + '.');
+    }
+
+    private EntityReference getCurrentConfluenceSpace(AQLFunctionCall expression) throws ConversionException
+    {
+        EntityReference res;
+        try {
+            res = confluenceSpaceResolver.getSpace(contextProvider.get().getDoc().getDocumentReference());
+        } catch (ConfluenceResolverException e) {
+            throw new ConversionException(FAILED_TO_EVALUATE_CURRENT_SPACE, e, expression.getParserState());
+        }
+
+        if (res == null) {
+            throw new ConversionException(FAILED_TO_EVALUATE_CURRENT_SPACE, expression.getParserState());
+        }
+
+        return res;
     }
 
     protected String convertToSolr(AQLAtomicClause atom, AQLNumberLiteral expression) throws ConversionException
@@ -287,7 +321,7 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
                             expression.getParserState());
                     }
 
-                    return getSpaceFacet(confluenceSpaceResolver.getCurrentConfluenceSpace(expression));
+                    return getSpaceFacet(getCurrentConfluenceSpace(expression));
 
                 default:
                     throw new ConversionException(String.format("Unknown function [%s]", functionName),
