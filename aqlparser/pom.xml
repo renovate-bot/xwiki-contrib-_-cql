@@ -25,7 +25,7 @@
   <parent>
     <groupId>org.xwiki.contrib.cql</groupId>
     <artifactId>cql</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0.1.0</version>
   </parent>
   <artifactId>aqlparser</artifactId>
   <name>Confluence Query Language (CQL) - AQL Parser</name>
