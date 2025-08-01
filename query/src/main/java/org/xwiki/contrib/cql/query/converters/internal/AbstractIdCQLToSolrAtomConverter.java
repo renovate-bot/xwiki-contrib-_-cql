@@ -113,5 +113,9 @@ public abstract class AbstractIdCQLToSolrAtomConverter extends DefaultCQLToSolrA
         return null;
     }
 
+    /**
+     * @return the solr string to look for given document reference
+     * @param docRef the document reference to turn into a Solr value
+     */
     protected abstract String getValue(EntityReference docRef);
 }

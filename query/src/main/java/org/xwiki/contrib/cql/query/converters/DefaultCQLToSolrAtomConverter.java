@@ -177,6 +177,12 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
         return convertToSolr(atom, solrFields, solrValue);
     }
 
+    /**
+     * Convert a CQL atom to a Solr expression.
+     * @return the result of the conversion to Solr as string
+     * @param atom the atom being converted
+     * @throws ConversionException if this atom can't be converted
+     */
     protected String getSolrValue(AQLAtomicClause atom) throws ConversionException
     {
         AbstractAQLRightHandValue right = atom.getRight();
@@ -193,6 +199,13 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
             atom.getOp().getParserState());
     }
 
+    /**
+     * Convert a boolean CQL atomic value to a Solr expression.
+     * @return the result of the conversion to Solr as string
+     * @param atom the atom being converted
+     * @param expression the expression corresponding to this atom
+     * @throws ConversionException if this expression can't be converted
+     */
     protected String convertToSolr(AQLAtomicClause atom, AbstractAQLAtomicValue expression) throws ConversionException
     {
         if (expression instanceof AQLFunctionCall) {
@@ -218,14 +231,25 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
         throw new ConversionException("BUG: Unsupported construct." + UNEXP, expression.getParserState());
     }
 
-    /* NOTE: convertToSolr methods are declared to throw ConversionException even if they don't actually throw so
-       inheriting classes can throw. */
-
+    /**
+     * Convert a CQL boolean literal to a Solr expression.
+     * @return the result of the conversion to Solr as string
+     * @param atom the atom being converted
+     * @param expression the expression corresponding to this atom
+     * @throws ConversionException if this expression can't be converted
+     */
     protected String convertToSolr(AQLAtomicClause atom, AQLBooleanLiteral expression) throws ConversionException
     {
         return expression.isTrue() ? "true" : "false";
     }
 
+    /**
+     * Convert a CQL String literal to a Solr expression.
+     * @return the result of the conversion to Solr as string
+     * @param atom the atom being converted
+     * @param expression the expression corresponding to this atom
+     * @throws ConversionException if this expression can't be converted
+     */
     protected String convertToSolr(AQLAtomicClause atom, AQLStringLiteral expression) throws ConversionException
     {
         String v = expression.getString();
@@ -269,11 +293,25 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
         return res;
     }
 
+    /**
+     * Convert a number CQL expression to a Solr expression.
+     * @return the result of the conversion to Solr as string
+     * @param atom the atom being converted
+     * @param expression the expression corresponding to this atom
+     * @throws ConversionException if this expression can't be converted
+     */
     protected String convertToSolr(AQLAtomicClause atom, AQLNumberLiteral expression) throws ConversionException
     {
         return escapeSolr(expression.getNumber());
     }
 
+    /**
+     * Convert a CQL Date literal to a Solr expression.
+     * @return the result of the conversion to Solr as string
+     * @param atom the atom being converted
+     * @param expression the expression corresponding to this atom
+     * @throws ConversionException if this expression can't be converted
+     */
     protected String convertToSolr(AQLAtomicClause atom, AQLDateLiteral expression) throws ConversionException
     {
         String d = String.format("%s-%s-%s",
@@ -293,6 +331,13 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
         return (currentUser.indexOf(':') == -1 ? "*\\:" : "") + escapeSolr(currentUser);
     }
 
+    /**
+     * Convert a CQL Function call to a Solr expression.
+     * @return the result of the conversion to Solr as string
+     * @param atom the atom being converted
+     * @param expression the expression corresponding to this atom
+     * @throws ConversionException if this expression can't be converted
+     */
     protected String convertToSolr(AQLAtomicClause atom, AQLFunctionCall expression) throws ConversionException
     {
         String functionName = expression.getFunctionName();
@@ -333,6 +378,13 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
         }
     }
 
+    /**
+     * Convert a CQL IN expression to a Solr expression.
+     * @return the result of the conversion to Solr as string
+     * @param atom the atom being converted
+     * @param expression the expression corresponding to this atom
+     * @throws ConversionException if this expression can't be converted
+     */
     protected String convertToSolr(AQLAtomicClause atom, AQLInExpression expression) throws ConversionException
     {
         String solrValue;
@@ -345,6 +397,11 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
         return solrValue;
     }
 
+    /**
+     * @return the list of solr fields corresponding to this CQL atom.
+     * @param atom the atom
+     * @throws ConversionException if the corresponding list of solr fields can't be determined for some reason
+     */
     protected List<String> getSolrFields(AQLAtomicClause atom) throws ConversionException
     {
         String field = atom.getField();

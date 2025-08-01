@@ -63,6 +63,7 @@ public class DefaultCQLToSolrSortParameterConverter implements CQLToSolrSortFiel
      * @param cql the CQL statement in which the field appears
      * @param orderByParameter the order by parameter being handled
      * @param field the field to convert
+     * @throws ConversionException if the solr sort field couldn't be determined for some reason
      */
     public String getSolrSortField(AQLStatement cql, AQLOrderByClause orderByParameter, String field)
         throws ConversionException
