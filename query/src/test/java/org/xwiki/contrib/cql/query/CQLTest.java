@@ -99,7 +99,7 @@ class CQLTest
 
     private static final DocumentReference SUBPAGE_REF = new DocumentReference(
         TESTWIKI,
-        Arrays.asList(MY_SPACE_TESTS, "MyPage", "SubPage"),
+        Arrays.asList(MY_SPACE_TESTS, "My Page", "SubPage"),
         WEB_HOME
     );
 
@@ -219,7 +219,7 @@ class CQLTest
     @Test
     void testIdCurrentContent() throws Exception
     {
-        String expected = "fullname:MySpaceTests.MyPage.SubPage.WebHome";
+        String expected = "fullname:MySpaceTests.My\\ Page.SubPage.WebHome";
         assertEquals(expected, t("id = currentContent()"));
         assertEquals(expected, t("content = currentContent()"));
     }
@@ -228,7 +228,7 @@ class CQLTest
     void testParentCurrentContent() throws Exception
     {
         assertEquals(
-            "space_exact:MySpaceTests.MyPage.SubPage",
+            "space_facet:(2\\/MySpaceTests.My\\ Page.SubPage. AND 3\\/* AND -4\\/*)",
             t("parent = currentContent()")
         );
     }
@@ -237,7 +237,7 @@ class CQLTest
     void testAncestorCurrentContent() throws Exception
     {
         assertEquals(
-            "space_facet:2\\/MySpaceTests.MyPage.SubPage.",
+            "space_facet:2\\/MySpaceTests.My\\ Page.SubPage.",
             t("ancestor = currentContent()")
         );
     }
@@ -603,7 +603,7 @@ class CQLTest
     void testCQLIdNotIn() throws Exception
     {
         assertEquals(
-            "-fullname:(MySpaceTests.MyPage.SubPage.TheAnswer.WebHome OR MySpaceTests.MyPage.SubPage.LEET.WebHome)",
+            "-fullname:(MySpaceTests.My\\ Page.SubPage.TheAnswer.WebHome OR MySpaceTests.My\\ Page.SubPage.LEET.WebHome)",
             t("id not in (42, 1337)"));
     }
 
@@ -611,7 +611,7 @@ class CQLTest
     void testCQLContent() throws Exception
     {
         assertEquals(
-            "fullname:MySpaceTests.MyPage.SubPage.TheAnswer.WebHome",
+            "fullname:MySpaceTests.My\\ Page.SubPage.TheAnswer.WebHome",
             t("content = 42"));
     }
 
@@ -619,7 +619,7 @@ class CQLTest
     void testCQLAncestor() throws Exception
     {
         assertEquals(
-            "space_facet:3\\/MySpaceTests.MyPage.SubPage.TheAnswer.",
+            "space_facet:3\\/MySpaceTests.My\\ Page.SubPage.TheAnswer.",
             t("ancestor = 42"));
     }
 
@@ -627,7 +627,7 @@ class CQLTest
     void testCQLParent() throws Exception
     {
         assertEquals(
-            "space_exact:MySpaceTests.MyPage.SubPage.TheAnswer",
+            "space_exact:MySpaceTests.My\\ Page.SubPage.TheAnswer",
             t("parent = 42"));
     }
 
