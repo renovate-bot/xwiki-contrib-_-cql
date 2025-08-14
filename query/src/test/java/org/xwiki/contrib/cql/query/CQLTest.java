@@ -21,7 +21,6 @@ package org.xwiki.contrib.cql.query;
     
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +50,6 @@ import com.xpn.xwiki.test.junit5.mockito.InjectMockitoOldcore;
 import com.xpn.xwiki.test.junit5.mockito.OldcoreTest;
 import com.xpn.xwiki.test.reference.ReferenceComponentList;
 
-import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
@@ -288,7 +286,7 @@ class CQLTest
     }
 
     @Test
-    void testTextEqual() throws Exception
+    void testTextEqual()
     {
         expectParserException(
             String.format(FIELD_ONLY_SUPPORTED_WITH_CONTAINS, "text"),

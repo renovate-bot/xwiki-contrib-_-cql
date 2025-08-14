@@ -33,7 +33,6 @@ import org.xwiki.contrib.cql.query.converters.DefaultCQLToSolrAtomConverter;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.stability.Unstable;
 
-
 import com.xpn.xwiki.XWikiContext;
 
 import static org.xwiki.contrib.cql.query.converters.Utils.escapeSolr;
@@ -104,7 +103,7 @@ public abstract class AbstractIdCQLToSolrAtomConverter extends DefaultCQLToSolrA
             AQLFunctionCall fn = (AQLFunctionCall) right;
             if ("currentcontent".equalsIgnoreCase(fn.getFunctionName())) {
                 if (!fn.getArguments().isEmpty()) {
-                    throw new ConversionException("Function [currentUser] does not take any argument",
+                    throw new ConversionException("Function [currentContent] does not take any argument",
                         right.getParserState());
                 }
                 return contextProvider.get().getDoc().getDocumentReference();
