@@ -627,8 +627,34 @@ class CQLTest
     void testCQLParent() throws Exception
     {
         assertEquals(
-            "space_exact:MySpaceTests.My\\ Page.SubPage.TheAnswer",
+            "space_facet:(3\\/MySpaceTests.My\\ Page.SubPage.TheAnswer. AND 4\\/* AND -5\\/*)",
             t("parent = 42"));
+    }
+
+    @Test
+    void testCQLNotParent() throws Exception
+    {
+        assertEquals(
+            "-space_facet:(3\\/MySpaceTests.My\\ Page.SubPage.TheAnswer. AND 4\\/* AND -5\\/*)",
+            t("parent != 42"));
+    }
+
+    @Test
+    void testCQLParentIn() throws Exception
+    {
+        assertEquals(
+            "space_facet:((3\\/MySpaceTests.My\\ Page.SubPage.LEET. AND 4\\/* AND -5\\/*)"
+                + " OR (3\\/MySpaceTests.My\\ Page.SubPage.TheAnswer. AND 4\\/* AND -5\\/*))",
+            t("parent in (1337, 42)"));
+    }
+
+    @Test
+    void testCQLParentNotIn() throws Exception
+    {
+        assertEquals(
+            "-space_facet:((3\\/MySpaceTests.My\\ Page.SubPage.TheAnswer. AND 4\\/* AND -5\\/*)"
+                + " OR (3\\/MySpaceTests.My\\ Page.SubPage.LEET. AND 4\\/* AND -5\\/*))",
+            t("parent not in (42, 1337)"));
     }
 
     @Test

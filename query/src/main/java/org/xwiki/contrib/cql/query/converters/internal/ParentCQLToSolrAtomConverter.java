@@ -19,20 +19,14 @@
  */
 package org.xwiki.contrib.cql.query.converters.internal;
 
-import java.util.Collections;
-import java.util.List;
-
 import javax.annotation.Priority;
-import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.apache.commons.lang3.StringUtils;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.cql.aqlparser.ast.AQLAtomicClause;
-import org.xwiki.contrib.cql.query.converters.CQLToSolrAtomConverter;
+import org.xwiki.contrib.cql.aqlparser.ast.AbstractAQLAtomicValue;
 import org.xwiki.contrib.cql.query.converters.ConversionException;
-import org.xwiki.model.EntityType;
-import org.xwiki.model.reference.EntityReference;
-import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.stability.Unstable;
 
 /**
@@ -44,27 +38,44 @@ import org.xwiki.stability.Unstable;
 @Named("parent")
 @Unstable
 @Priority(900)
-public class ParentCQLToSolrAtomConverter extends AbstractIdCQLToSolrAtomConverter implements CQLToSolrAtomConverter
+public class ParentCQLToSolrAtomConverter extends AncestorCQLToSolrAtomConverter
 {
-    private static final List<String> FULLNAME = Collections.singletonList("space_exact");
-
-    @Inject
-    @Named("local")
-    private EntityReferenceSerializer<String> serializer;
+    private static final String THIS_IS_A_BUG = "This is a bug in the CQL module, please report.";
 
     @Override
-    protected List<String> getSolrFields(AQLAtomicClause atom) throws ConversionException
+    protected String convertToSolr(AQLAtomicClause atom, AbstractAQLAtomicValue right) throws ConversionException
     {
-        return FULLNAME;
-    }
+        String s = super.convertToSolr(atom, right);
+        if (StringUtils.isEmpty(s)) {
+            throw new ConversionException("Didn't expect to have an empty ancestor Solr conversion. " + THIS_IS_A_BUG,
+                atom.getParserState());
+        }
+        // We expect s to be of the shape "N\/Space1.Space2...SpaceN+1."
+        // This is the wanted parent space.
+        // The result should be pages that are direct children of this parent. This means pages that:
+        //  - (1) have s in their space_facet
+        //  - (2) and also N+1\/* (non-terminal children pages - WebHome pages that have at least one additional space)
+        //  - (3) and  not N+2\/* (because they are not direct children)
 
-    protected String getValue(EntityReference docRef)
-    {
-        EntityReference parentRef = docRef.getParent();
-        if (parentRef == null || !parentRef.getType().equals(EntityType.SPACE)) {
-            return null;
+        int slash = s.indexOf("\\/");
+        if (slash == -1) {
+            error(atom);
         }
 
-        return serializer.serialize(parentRef);
+        int n = -1;
+        try {
+            n = Integer.parseInt(s.substring(0, slash).trim());
+        } catch (NumberFormatException e) {
+            error(atom);
+        }
+        //          (1)              (2)                        (3)
+        return '(' + s + " AND " + (n + 1) + "\\/* AND -" + (n + 2) + "\\/*)";
+    }
+
+    private void error(AQLAtomicClause atom) throws ConversionException
+    {
+        throw new ConversionException(
+            "Expected the ancestor clause to be converted to something like N/*, but it wasn't."
+                + THIS_IS_A_BUG, atom.getParserState());
     }
 }
