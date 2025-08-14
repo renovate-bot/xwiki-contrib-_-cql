@@ -55,6 +55,19 @@ public abstract class AbstractIdCQLToSolrAtomConverter extends DefaultCQLToSolrA
     @Override
     protected String convertToSolr(AQLAtomicClause atom, AbstractAQLAtomicValue right) throws ConversionException
     {
+        switch (atom.getOp().getOperator()) {
+            case IN:
+            case EQ:
+            case NEQ:
+            case NOT_IN:
+            case CONTAINS:
+            case DOES_NOT_CONTAIN:
+                // ok
+                break;
+            default:
+                throw new ConversionException("Unsupported operator for id, parent or ancestor field",
+                    atom.getOp().getParserState());
+        }
         EntityReference docRef = tryCurrentContentFunction(right);
 
         if (docRef == null) {

@@ -649,6 +649,14 @@ class CQLTest
     }
 
     @Test
+    void testCQLParentIncorrectOperator()
+    {
+        expectParserException(
+            "Unsupported operator for id, parent or ancestor field (line 1, col 8, pos 7)",
+            "parent < 42");
+    }
+
+    @Test
     void testQueryExceptionWhileHandlingConfluenceID()
     {
         expectParserException(
