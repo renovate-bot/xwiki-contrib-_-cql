@@ -89,6 +89,7 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
     private static final String LASTMODIFIED = "lastmodified";
     private static final String TEXT = "text";
     private static final String SPACE = "space";
+    private static final String SPACE_KEY = "space.key";
     private static final String LABEL = "label";
     private static final String TYPE = "type";
 
@@ -253,7 +254,7 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
     protected String convertToSolr(AQLAtomicClause atom, AQLStringLiteral expression) throws ConversionException
     {
         String v = expression.getString();
-        if (atom.getField().equals(SPACE)) {
+        if (atom.getField().equals(SPACE) || atom.getField().equals(SPACE_KEY)) {
             String err = String.format("Failed to find space [%s]", v);
             try {
                 EntityReference space = confluenceSpaceKeyResolver.getSpaceByKey(v);
@@ -454,6 +455,7 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
                 solrFields = TAGS_SOLR_FIELDS;
                 break;
             case SPACE:
+            case SPACE_KEY:
                 // takes a string, but might have been moved by the migration. We can try our best though.
                 solrFields = SPACES_SOLR_FIELDS;
                 break;

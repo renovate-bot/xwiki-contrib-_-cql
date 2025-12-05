@@ -217,6 +217,30 @@ class CQLTest
     }
 
     @Test
+    void testSpaceKey() throws Exception
+    {
+        assertEquals(
+            "space_facet:0\\/MySpaceTests.",
+            t("space.key = currentSpace()"));
+    }
+
+    @Test
+    void testSpaceIn() throws Exception
+    {
+        assertEquals(
+            "space_facet:(0\\/space1. OR 0\\/space2.)",
+            t("space in (\"space1\", \"space2\")"));
+    }
+
+    @Test
+    void testSpaceKeyIn() throws Exception
+    {
+        assertEquals(
+            "space_facet:(0\\/space1. OR 0\\/space2.)",
+            t("space.key in (\"space1\", \"space2\")"));
+    }
+
+    @Test
     void testIdCurrentContent() throws Exception
     {
         String expected = "fullname:MySpaceTests.My\\ Page.SubPage.WebHome";
