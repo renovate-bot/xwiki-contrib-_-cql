@@ -519,7 +519,7 @@ public class DefaultCQLToSolrAtomConverter implements CQLToSolrAtomConverter
         }
 
         if (solrAtoms.isEmpty()) {
-            throw  new ConversionException("BUG: No Solr expressions were generated for this CQL exception." + UNEXP,
+            throw  new ConversionException("BUG: No Solr expressions were generated for this CQL expression." + UNEXP,
                 atom.getParserState());
         }
 
