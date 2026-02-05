@@ -1,2 +1,3 @@
 org.xwiki.contrib.cql.query.TestCQLToSolrAtomConverter
+org.xwiki.contrib.cql.query.TestRegexCQLToSolrAtomConverter
 org.xwiki.contrib.cql.query.TestCQLToSolrSortParameterConverter

@@ -66,6 +66,7 @@ import static org.mockito.Mockito.when;
     ContentCQLToSolrAtomConverter.class,
     ParentCQLToSolrAtomConverter.class,
     DefaultCQLToSolrAtomConverter.class,
+    TestRegexCQLToSolrAtomConverter.class,
     CQLToSolrQueryConverter.class
 })
 class CQLTest
@@ -1015,5 +1016,12 @@ class CQLTest
             "The CQL expression is empty (line 0, col 0, pos 0)",
             ""
         );
+    }
+
+    @Test
+    void testRegexMatchedField() throws Exception
+    {
+        assertEquals("testfield_theanswer:The\\ answer",
+            t("test.theanswer = 42"));
     }
 }

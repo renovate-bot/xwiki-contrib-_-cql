@@ -19,6 +19,7 @@
  */
 package org.xwiki.contrib.cql.query.converters;
 
+import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.manager.ComponentLookupException;
 import org.xwiki.component.manager.ComponentManager;
@@ -32,6 +33,8 @@ import org.xwiki.contrib.cql.aqlparser.ast.AQLClausesWithNextOperator;
 import org.xwiki.stability.Unstable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -50,6 +53,9 @@ import static org.xwiki.contrib.cql.query.converters.Utils.betweenParentheses;
 public class CQLToSolrQueryConverter
 {
     private static final String UNEXP = " This is unexpected, please report an issue";
+
+    @Inject
+    private Logger logger;
 
     @Inject
     @Named("")
@@ -176,18 +182,59 @@ public class CQLToSolrQueryConverter
     {
         String result = null;
 
-        // Find a specialized converter for this field and use it if any.
-        String lowerField = atom.getField().toLowerCase();
-        if (this.componentManager.hasComponent(CQLToSolrAtomConverter.class, lowerField)) {
-            CQLToSolrAtomConverter converter;
-            try {
-                converter = this.componentManager.getInstance(CQLToSolrAtomConverter.class, lowerField);
-            } catch (ComponentLookupException e) {
-                throw new ConversionException(e, atom.getParserState());
-            }
+        CQLToSolrAtomConverter converter = getSpecializedCqlToSolrAtomConverter(atom);
+        if (converter != null) {
             result = converter.convertToSolr(atom);
         }
 
         return result == null ? atomConverter.convertToSolr(atom) : result;
+    }
+
+    private CQLToSolrAtomConverter getSpecializedCqlToSolrAtomConverter(AQLAtomicClause atom) throws ConversionException
+    {
+        String lowerField = atom.getField().toLowerCase();
+
+        Map<String, CQLToSolrAtomConverter> converters;
+        try {
+            converters = this.componentManager.getInstanceMap(CQLToSolrAtomConverter.class);
+        } catch (ComponentLookupException e) {
+            throw new ConversionException(e, atom.getParserState());
+        }
+
+        CQLToSolrAtomConverter happyPathCandidateConverter = converters.get(lowerField);
+        if (happyPathCandidateConverter != null) {
+            Object handledFields = happyPathCandidateConverter.getHandledFields();
+            if (handledFields == null || lowerField.equals(handledFields)) {
+                return happyPathCandidateConverter;
+            }
+        }
+
+        for (CQLToSolrAtomConverter candidate : converters.values()) {
+            if (isFieldManagedByConverter(candidate, lowerField)) {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private boolean isFieldManagedByConverter(CQLToSolrAtomConverter candidate, String lowerField)
+    {
+        Object handledFields = candidate.getHandledFields();
+        if (handledFields == null) {
+            return false;
+        }
+
+        if (handledFields instanceof String) {
+            return lowerField.equals(handledFields);
+        }
+
+        if (handledFields instanceof Pattern) {
+            return ((Pattern) handledFields).matcher(lowerField).matches();
+        }
+
+        logger.error("Component [{}] returned an unsupported handled field type [{}], it will be ignored",
+            candidate.getClass(), handledFields.getClass());
+        return false;
     }
 }

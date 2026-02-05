@@ -38,4 +38,14 @@ public interface CQLToSolrAtomConverter
      * @throws ConversionException if something wrong happens
      */
     String convertToSolr(AQLAtomicClause atom) throws ConversionException;
+
+    /**
+     * @return the name(s) of the fields handled by this converter, as a String equal to the name or a Pattern
+     * matching the name. If null, the name of the component will be used.
+     * @since 0.2.0
+     */
+    default Object getHandledFields()
+    {
+        return null;
+    }
 }
