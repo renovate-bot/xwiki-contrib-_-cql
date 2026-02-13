@@ -55,7 +55,7 @@
     <dependency>
       <groupId>org.xwiki.contrib.confluence</groupId>
       <artifactId>confluence-resolvers</artifactId>
-      <version>9.63.2</version>
+      <version>9.91.0</version>
     </dependency>
 
     <!-- Test dependencies -->
